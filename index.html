@@ -9,19 +9,18 @@ h2{margin-top:0}
 .card{background:#1F2937;padding:12px;border-radius:8px;box-shadow:0 1px 4px rgba(0,0,0,.15);margin-bottom:12px}
 table{width:100%;border-collapse:collapse;table-layout:fixed}
 th,td{border:1px solid #4B5563;padding:5px}
-/* 預設 */
-th:first-child,td:first-child{width:40%}
-/* 資產(5欄) */
-#資產 th:first-child,#資產 td:first-child{width:52%}
-#資產 th:nth-child(n+2),#資產 td:nth-child(n+2){width:12%}
-/* 負債(4欄) */
-#負債 th:first-child,#負債 td:first-child{width:58%}
-#負債 th:nth-child(n+2),#負債 td:nth-child(n+2){width:14%}
-/* 收入/支出維持較平均 */
-#收入 th:first-child,#收入 td:first-child,
-#支出 th:first-child,#支出 td:first-child{width:32%}
-#收入 th:nth-child(n+2),#收入 td:nth-child(n+2),
-#支出 th:nth-child(n+2),#支出 td:nth-child(n+2){width:11%}
+
+/* 固定欄寬 */
+th:first-child,td:first-child{width:160px;}   /* 名稱 */
+th:nth-child(2),td:nth-child(2){width:85px;}  /* 金額 */
+th:nth-child(3),td:nth-child(3){width:85px;}
+th:nth-child(4),td:nth-child(4){width:85px;}
+th:nth-child(5),td:nth-child(5){width:70px;}
+th:nth-child(6),td:nth-child(6){width:70px;}
+th:nth-child(7),td:nth-child(7){width:70px;}
+th:nth-child(8),td:nth-child(8){width:85px;}
+th:last-child,td:last-child{width:72px;}      /* 操作 */
+
 th{background:#374151;color:#F9FAFB}
 input,select{width:100%;box-sizing:border-box;background:#111827;color:#F9FAFB;border:1px solid #4B5563}
 button{margin:6px 0}.good{color:green}.bad{color:#c00}
