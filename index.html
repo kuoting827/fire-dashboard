@@ -41,7 +41,7 @@ if(sec==='資產'){
  h+='<th>初始金額(萬)</th><th>每月投入(萬)</th><th>年報酬率%</th>';
 }else{
  h+='<th>金額(萬)</th>';
- if(freq) h+='<th>頻率</th><th>起始</th><th>結束</th>';
+ if(sec==='負債'){h+='<th>年報酬率%</th>';} if(freq) h+='<th>頻率</th><th>起始</th><th>結束</th>'; h+='<th>操作</th>';
 }
 h+='</tr>';
 (seed[sec]||[]).forEach(r=>h+=row(sec,freq,r));
@@ -58,7 +58,7 @@ if(sec==='資產'){
  s+='<td><input type=number value="'+rate+'"></td>';
 }else{
  s+='</select></td><td><input type=number value="'+(r[1]||0)+'"></td>';
- if(freq){
+ if(sec==='負債'){let rate=r[2]||0; s+='<td><input type=number value="'+rate+'"></td>';} if(freq){
   let f=r[2]||'月',st=r[3]||39,en=r[4]||100;
   s+='<td><select>';
   ['月','季','年'].forEach(x=>s+='<option '+(x==f?'selected':'')+'>'+x+'</option>');
@@ -67,7 +67,7 @@ if(sec==='資產'){
   s+='<td><input type=number value="'+en+'"></td>';
  }
 }
-return s+'</tr>';
+s+='<td><button onclick="moveUp(this)">↑</button><button onclick="moveDown(this)">↓</button><button onclick="delRow(this)">🗑</button></td>'; return s+'</tr>';
 }
 forms.innerHTML=build('資產',false)+build('收入',true)+build('負債',false)+build('支出',true);
 (function(){
@@ -89,6 +89,11 @@ forms.innerHTML=build('資產',false)+build('收入',true)+build('負債',false)
  }catch(e){}
 })();
 function addRow(s,f){document.querySelector('#'+CSS.escape(s)).insertAdjacentHTML('beforeend',row(s,f));bind();}
+
+function delRow(b){b.closest('tr').remove();calc();}
+function moveUp(b){const r=b.closest('tr');const p=r.previousElementSibling;if(p&&p.rowIndex>0){p.before(r);calc();}}
+function moveDown(b){const r=b.closest('tr');const n=r.nextElementSibling;if(n){n.after(r);calc();}}
+
 function annual(v,f){return f=='月'?v*12:f=='季'?v*4:v;}
 function calc(){
 let a=0,d=0,i=0,e=0; let age=+document.getElementById('age').value; 
@@ -102,7 +107,15 @@ document.querySelectorAll('#資產 tr').forEach((r,n)=>{
  assets.push({value:init,add:add,rate:rate});
  a+=init;
 });
-document.querySelectorAll('#負債 tr').forEach((r,n)=>{if(n)d+=+r.querySelector('input').value||0});
+let debts=[];
+document.querySelectorAll('#負債 tr').forEach((r,n)=>{
+ if(!n)return;
+ let i=r.querySelectorAll('input');
+ let v=+i[0].value||0;
+ let rt=((+i[1].value)||0)/100;
+ debts.push({value:v,rate:rt});
+ d+=v;
+});
 document.querySelectorAll('#收入 tr').forEach((r,n)=>{if(n){let c=r.querySelectorAll('input,select');let s=+c[3].value,t=+c[4].value;if(age>=s&&age<=t)i+=annual(+c[1].value||0,c[2].value)}});
 document.querySelectorAll('#支出 tr').forEach((r,n)=>{if(n){let c=r.querySelectorAll('input,select');let s=+c[3].value,t=+c[4].value;if(age>=s&&age<=t)e+=annual(+c[1].value||0,c[2].value)}});
 let net=a-d,flow=i-e,need=e*25,fire=net>=need;
@@ -118,7 +131,7 @@ summary.innerHTML='<table>'+
 
 let out='<table><tr><th>年齡</th><th>淨資產</th><th>FIRE</th></tr>'; let firstAsset=null;
 let fireAge='-';
-let debt=d;
+let debt=0;
 for(let y=age;y<=100;y++){
  let yearIncome=0,yearExpense=0;
  document.querySelectorAll('#收入 tr').forEach((r,n)=>{
@@ -139,6 +152,7 @@ for(let y=age;y<=100;y++){
    x.value=(x.value+x.add*12)*(1+x.rate);
    invest+=x.value;
  });
+ debt=0; debts.forEach(x=>{x.value=x.value*(1+x.rate); debt+=x.value;});
  let asset=invest-debt+yearFlow;
  let dynamicNeed=yearExpense*25; if(firstAsset===null) firstAsset=asset; let ok=asset>=dynamicNeed;
  if(ok&&fireAge=='-')fireAge=y;
