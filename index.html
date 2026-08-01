@@ -3,12 +3,12 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>FIRE 現金流 v2</title>
 <style>
-body{font-family:Arial;background:#f3f5f7;margin:0;padding:16px}
+body{font-family:Arial;background:#111827;color:#F9FAFB;margin:0;padding:16px}
 h2{margin-top:0}
 .wrap{display:grid;grid-template-columns:2fr 1fr;gap:16px}
-.card{background:#fff;padding:12px;border-radius:8px;box-shadow:0 1px 4px rgba(0,0,0,.15);margin-bottom:12px}
-table{width:100%;border-collapse:collapse}th,td{border:1px solid #ddd;padding:5px}
-th{background:#eef3f8}input,select{width:100%;box-sizing:border-box}
+.card{background:#1F2937;padding:12px;border-radius:8px;box-shadow:0 1px 4px rgba(0,0,0,.15);margin-bottom:12px}
+table{width:100%;border-collapse:collapse}th,td{border:1px solid #4B5563;padding:5px}
+th{background:#374151;color:#F9FAFB}input,select{width:100%;box-sizing:border-box;background:#111827;color:#F9FAFB;border:1px solid #4B5563}
 button{margin:6px 0}.good{color:green}.bad{color:#c00}
 @media(max-width:900px){.wrap{grid-template-columns:1fr}}
 </style></head><body>
@@ -30,14 +30,20 @@ const defs={
 支出:["餐費","生活","娛樂","保險","房貸","其他"]
 };
 const seed={
-資產:[["台股",550],["台股",330],["美股",75],["勞退",80],["外幣",3],["房產",1400]],
-收入:[["薪資",9,"月"],["獎金",45,"年"],["配息",2,"季"]],
+資產:[["台股",550,2,6],["台股",330,1,6],["美股",75,0,8],["勞退",80,0,4],["外幣",3,0,1],["房產",1400,0,2]],
+收入:[["薪資",9,"月",39,65],["獎金",45,"年",39,65],["配息",2,"季",39,100]],
 負債:[["房貸",1048]],
-支出:[["餐費",2,"月"],["生活",0.3,"月"],["娛樂",0.3,"月"],["保險",2.5,"年"],["房貸",3.4,"月"]]
+支出:[["餐費",2,"月",39,100],["生活",0.3,"月",39,100],["娛樂",0.3,"月",39,100],["保險",2.5,"年",39,100],["房貸",3.4,"月",39,75]]
 };
 function build(sec,freq){
-let h='<div class="card"><h3>'+sec+'</h3><table id="'+sec+'"><tr><th>名稱</th><th>金額(萬)</th>';
-if(freq)h+='<th>頻率</th>';h+='</tr>';
+let h='<div class="card"><h3>'+sec+'</h3><table id="'+sec+'"><tr><th>名稱</th>';
+if(sec==='資產'){
+ h+='<th>初始金額(萬)</th><th>每月投入(萬)</th><th>年報酬率%</th>';
+}else{
+ h+='<th>金額(萬)</th>';
+ if(freq) h+='<th>頻率</th><th>起始</th><th>結束</th>';
+}
+h+='</tr>';
 (seed[sec]||[]).forEach(r=>h+=row(sec,freq,r));
 h+='</table><button onclick="addRow(\''+sec+'\','+freq+')">新增一行</button></div>';
 return h;
@@ -45,46 +51,131 @@ return h;
 function row(sec,freq,r=[]){
 let s='<tr><td><select>';
 defs[sec].forEach(v=>s+='<option '+(v==r[0]?'selected':'')+'>'+v+'</option>');
-s+='</select></td><td><input type=number value="'+(r[1]||0)+'"></td>';
-if(freq){
-let f=r[2]||'月';
-s+='<td><select>';
-['月','季','年'].forEach(x=>s+='<option '+(x==f?'selected':'')+'>'+x+'</option>');
-s+='</select></td>';
+if(sec==='資產'){
+ let init=r[1]||0,add=r[2]||0,rate=r[3]||0;
+ s+='</select></td><td><input type=number value="'+init+'"></td>';
+ s+='<td><input type=number value="'+add+'"></td>';
+ s+='<td><input type=number value="'+rate+'"></td>';
+}else{
+ s+='</select></td><td><input type=number value="'+(r[1]||0)+'"></td>';
+ if(freq){
+  let f=r[2]||'月',st=r[3]||39,en=r[4]||100;
+  s+='<td><select>';
+  ['月','季','年'].forEach(x=>s+='<option '+(x==f?'selected':'')+'>'+x+'</option>');
+  s+='</select></td>';
+  s+='<td><input type=number value="'+st+'"></td>';
+  s+='<td><input type=number value="'+en+'"></td>';
+ }
 }
 return s+'</tr>';
 }
 forms.innerHTML=build('資產',false)+build('收入',true)+build('負債',false)+build('支出',true);
+(function(){
+ const raw=localStorage.getItem('firev2');
+ if(!raw)return;
+ try{
+  const d=JSON.parse(raw);
+  if(d.age) document.getElementById('age').value=d.age;
+  function load(id,rows,freq){
+    if(!rows)return;
+    const tb=document.getElementById(id);
+    tb.innerHTML=tb.rows[0].outerHTML;
+    rows.forEach(r=>tb.insertAdjacentHTML('beforeend',row(id,freq,r)));
+  }
+  load('資產',d.assets,false);
+  load('收入',d.incomes,true);
+  load('負債',d.debts,false);
+  load('支出',d.expenses,true);
+ }catch(e){}
+})();
 function addRow(s,f){document.querySelector('#'+CSS.escape(s)).insertAdjacentHTML('beforeend',row(s,f));bind();}
 function annual(v,f){return f=='月'?v*12:f=='季'?v*4:v;}
 function calc(){
-let a=0,d=0,i=0,e=0;
-document.querySelectorAll('#資產 tr').forEach((r,n)=>{if(n)a+=+r.querySelector('input').value||0});
+let a=0,d=0,i=0,e=0; let age=+document.getElementById('age').value; 
+let assets=[];
+document.querySelectorAll('#資產 tr').forEach((r,n)=>{
+ if(!n)return;
+ let i=r.querySelectorAll('input');
+ let init=+i[0].value||0;
+ let add=+i[1].value||0;
+ let rate=(+i[2].value||0)/100;
+ assets.push({value:init,add:add,rate:rate});
+ a+=init;
+});
 document.querySelectorAll('#負債 tr').forEach((r,n)=>{if(n)d+=+r.querySelector('input').value||0});
-document.querySelectorAll('#收入 tr').forEach((r,n)=>{if(n){let c=r.querySelectorAll('input,select');i+=annual(+c[1].value||0,c[2].value)}});
-document.querySelectorAll('#支出 tr').forEach((r,n)=>{if(n){let c=r.querySelectorAll('input,select');e+=annual(+c[1].value||0,c[2].value)}});
+document.querySelectorAll('#收入 tr').forEach((r,n)=>{if(n){let c=r.querySelectorAll('input,select');let s=+c[3].value,t=+c[4].value;if(age>=s&&age<=t)i+=annual(+c[1].value||0,c[2].value)}});
+document.querySelectorAll('#支出 tr').forEach((r,n)=>{if(n){let c=r.querySelectorAll('input,select');let s=+c[3].value,t=+c[4].value;if(age>=s&&age<=t)e+=annual(+c[1].value||0,c[2].value)}});
 let net=a-d,flow=i-e,need=e*25,fire=net>=need;
+let investNow=assets.reduce((s,x)=>s+x.value,0);
+let investIncome=assets.reduce((s,x)=>s+x.value*x.rate,0);
 summary.innerHTML='<table>'+
-'<tr><td>淨資產</td><td>'+net.toFixed(1)+'萬</td></tr>'+
+'<tr><td>投資資產</td><td>'+investNow.toFixed(1)+'萬</td></tr>'+'<tr><td>淨資產</td><td>'+net.toFixed(1)+'萬</td></tr>'+'<tr><td>預估投資收益</td><td>'+investIncome.toFixed(1)+'萬/年</td></tr>'+
 '<tr><td>年收入</td><td>'+i.toFixed(1)+'萬</td></tr>'+
 '<tr><td>年支出</td><td>'+e.toFixed(1)+'萬</td></tr>'+
 '<tr><td>年現金流</td><td>'+flow.toFixed(1)+'萬</td></tr>'+
 '<tr><td>FIRE需求</td><td>'+need.toFixed(1)+'萬</td></tr>'+
-'<tr><td>狀態</td><td class="'+(fire?'good':'bad')+'">'+(fire?'✅ 已達成':'❌ 未達成')+'</td></tr></table>';
-let age=+document.getElementById('age').value;
-let asset=net;
-let out='<table><tr><th>年齡</th><th>淨資產</th><th>FIRE</th></tr>';
+'<tr><td>FIRE完成率</td><td>'+((net/need)*100).toFixed(1)+'%</td></tr>'+'<tr><td>狀態</td><td class="'+(fire?'good':'bad')+'">'+(fire?'✅ 已達成':'❌ 未達成')+'</td></tr></table>';
+
+let out='<table><tr><th>年齡</th><th>淨資產</th><th>FIRE</th></tr>'; let firstAsset=null;
 let fireAge='-';
+let debt=d;
 for(let y=age;y<=100;y++){
-asset+=flow;
-let ok=asset>=need;
-if(ok&&fireAge=='-')fireAge=y;
-out+='<tr><td>'+y+'</td><td>'+asset.toFixed(0)+'</td><td>'+(ok?'✅':'')+'</td></tr>';
+ let yearIncome=0,yearExpense=0;
+ document.querySelectorAll('#收入 tr').forEach((r,n)=>{
+   if(!n)return;
+   let c=r.querySelectorAll('input,select');
+   let st=+c[3].value,en=+c[4].value;
+   if(y>=st && y<=en) yearIncome+=annual(+c[1].value||0,c[2].value);
+ });
+ document.querySelectorAll('#支出 tr').forEach((r,n)=>{
+   if(!n)return;
+   let c=r.querySelectorAll('input,select');
+   let st=+c[3].value,en=+c[4].value;
+   if(y>=st && y<=en) yearExpense+=annual(+c[1].value||0,c[2].value);
+ });
+ let yearFlow=yearIncome-yearExpense;
+ let invest=0;
+ assets.forEach(x=>{
+   x.value=(x.value+x.add*12)*(1+x.rate);
+   invest+=x.value;
+ });
+ let asset=invest-debt+yearFlow;
+ let dynamicNeed=yearExpense*25; if(firstAsset===null) firstAsset=asset; let ok=asset>=dynamicNeed;
+ if(ok&&fireAge=='-')fireAge=y;
+ out+='<tr style="'+(ok?'background:#14532d;':'')+'"><td>'+y+'</td><td>'+asset.toFixed(0)+'</td><td>'+(ok?'⭐':'')+'</td></tr>';
 }
+let fireRate=need?firstAsset/need*100:0;
+summary.innerHTML='<table>'+
+'<tr><td>投資資產</td><td>'+investNow.toFixed(1)+'萬</td></tr>'+
+'<tr><td>淨資產</td><td>'+firstAsset.toFixed(1)+'萬</td></tr>'+
+'<tr><td>預估投資收益</td><td>'+investIncome.toFixed(1)+'萬/年</td></tr>'+
+'<tr><td>年收入</td><td>'+i.toFixed(1)+'萬</td></tr>'+
+'<tr><td>年支出</td><td>'+e.toFixed(1)+'萬</td></tr>'+
+'<tr><td>年現金流</td><td>'+flow.toFixed(1)+'萬</td></tr>'+
+'<tr><td>FIRE需求</td><td>'+need.toFixed(1)+'萬</td></tr>'+
+'<tr><td>FIRE完成率</td><td>'+fireRate.toFixed(1)+'%</td></tr>'+
+'<tr><td>狀態</td><td class="'+(firstAsset>=need?'good':'bad')+'">'+(firstAsset>=need?'✅ 已達成':'❌ 未達成')+'</td></tr></table>';
 out+='</table><p><b>預估 FIRE 年齡：'+fireAge+'</b></p>';
 sim.innerHTML=out;
 if(save.checked){
-localStorage.setItem('firev2',document.body.innerHTML);
+function tableToJson(id){
+  const rows=[];
+  document.querySelectorAll('#'+CSS.escape(id)+' tr').forEach((tr,i)=>{
+    if(!i)return;
+    const vals=[];
+    tr.querySelectorAll('input,select').forEach(x=>vals.push(x.value));
+    rows.push(vals);
+  });
+  return rows;
+}
+const data={
+  age:age,
+  assets:tableToJson('資產'),
+  incomes:tableToJson('收入'),
+  debts:tableToJson('負債'),
+  expenses:tableToJson('支出')
+};
+localStorage.setItem('firev2',JSON.stringify(data));
 }
 }
 function bind(){document.querySelectorAll('input,select').forEach(x=>x.oninput=calc);calc();}
