@@ -81,7 +81,7 @@ if(sec==='資產'){
   s+='<td><input type=number value="'+en+'"></td><td><input type=number value="'+g+'"></td>';
  }
 }
-s+='<td><button onclick="moveUp(this)">↑</button><button onclick="moveDown(this)">↓</button><button onclick="delRow(this)">🗑</button></td>'; return s+'</tr>';
+s+='<td><button onclick="moveUp(this)">↑</button><button onclick="moveDown(this)">↓</button><button onclick="delRow(this)">X</button></td>'; return s+'</tr>';
 }
 forms.innerHTML=build('資產',false)+build('收入',true)+build('負債',false)+build('支出',true);
 (function(){
@@ -105,9 +105,23 @@ forms.innerHTML=build('資產',false)+build('收入',true)+build('負債',false)
 function addRow(s,f){document.querySelector('#'+CSS.escape(s)).insertAdjacentHTML('beforeend',row(s,f));bind();}
 
 function delRow(b){b.closest('tr').remove();calc();}
-function moveUp(b){const r=b.closest('tr');const p=r.previousElementSibling;if(p&&p.rowIndex>0){p.before(r);calc();}}
-function moveDown(b){const r=b.closest('tr');const n=r.nextElementSibling;if(n){n.after(r);calc();}}
-
+function moveUp(b){
+ const r=b.closest("tr");
+ const tbody=r.parentNode;
+ const prev=r.previousElementSibling;
+ if(prev && prev.rowIndex>0){
+   tbody.insertBefore(r,prev);
+   calc();
+ }
+}
+function moveDown(b){
+ const r=b.closest("tr");
+ const next=r.nextElementSibling;
+ if(next){
+   next.after(r);
+   calc();
+ }
+}
 function annual(v,f){return f=='月'?v*12:f=='季'?v*4:v;}
 function calc(){
 let a=0,d=0,i=0,e=0; let age=+document.getElementById('age').value; 
