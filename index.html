@@ -7,8 +7,12 @@ body{font-family:Arial;background:#111827;color:#F9FAFB;margin:0;padding:16px}
 h2{margin-top:0}
 .wrap{display:grid;grid-template-columns:2fr 1fr;gap:16px}
 .card{background:#1F2937;padding:12px;border-radius:8px;box-shadow:0 1px 4px rgba(0,0,0,.15);margin-bottom:12px}
-table{width:100%;border-collapse:collapse}th,td{border:1px solid #4B5563;padding:5px}
-th{background:#374151;color:#F9FAFB}input,select{width:100%;box-sizing:border-box;background:#111827;color:#F9FAFB;border:1px solid #4B5563}
+table{width:100%;border-collapse:collapse;table-layout:fixed}
+th,td{border:1px solid #4B5563;padding:5px}
+th:first-child,td:first-child{width:40%}
+th:not(:first-child),td:not(:first-child){width:24%}
+th{background:#374151;color:#F9FAFB}
+input,select{width:100%;box-sizing:border-box;background:#111827;color:#F9FAFB;border:1px solid #4B5563}
 button{margin:6px 0}.good{color:green}.bad{color:#c00}
 @media(max-width:900px){.wrap{grid-template-columns:1fr}}
 </style></head><body>
