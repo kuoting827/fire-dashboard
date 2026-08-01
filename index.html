@@ -19,7 +19,9 @@ th:nth-child(5),td:nth-child(5){width:70px;}
 th:nth-child(6),td:nth-child(6){width:70px;}
 th:nth-child(7),td:nth-child(7){width:70px;}
 th:nth-child(8),td:nth-child(8){width:85px;}
-th:last-child,td:last-child{width:72px;}      /* 操作 */
+th:last-child,td:last-child{width:85px;}      /* 操作 */
+#負債 th:nth-child(2),#負債 td:nth-child(2),#負債 th:nth-child(3),#負債 td:nth-child(3){width:85px;}
+
 
 th{background:#374151;color:#F9FAFB}
 input,select{width:100%;box-sizing:border-box;background:#111827;color:#F9FAFB;border:1px solid #4B5563}
@@ -81,7 +83,7 @@ if(sec==='資產'){
   s+='<td><input type=number value="'+en+'"></td><td><input type=number value="'+g+'"></td>';
  }
 }
-s+='<td><button onclick="moveUp(this)">↑</button><button onclick="moveDown(this)">↓</button><button onclick="delRow(this)">X</button></td>'; return s+'</tr>';
+s+='<td><button onclick="delRow(this)">X</button></td>'; return s+'</tr>';
 }
 forms.innerHTML=build('資產',false)+build('收入',true)+build('負債',false)+build('支出',true);
 (function(){
@@ -105,23 +107,9 @@ forms.innerHTML=build('資產',false)+build('收入',true)+build('負債',false)
 function addRow(s,f){document.querySelector('#'+CSS.escape(s)).insertAdjacentHTML('beforeend',row(s,f));bind();}
 
 function delRow(b){b.closest('tr').remove();calc();}
-function moveUp(b){
- const r=b.closest("tr");
- const tbody=r.parentNode;
- const prev=r.previousElementSibling;
- if(prev && prev.rowIndex>0){
-   tbody.insertBefore(r,prev);
-   calc();
- }
-}
-function moveDown(b){
- const r=b.closest("tr");
- const next=r.nextElementSibling;
- if(next){
-   next.after(r);
-   calc();
- }
-}
+function moveUp(b){}
+function moveDown(b){}
+
 function annual(v,f){return f=='月'?v*12:f=='季'?v*4:v;}
 function calc(){
 let a=0,d=0,i=0,e=0; let age=+document.getElementById('age').value; 
