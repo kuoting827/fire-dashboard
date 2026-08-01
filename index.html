@@ -41,7 +41,7 @@ if(sec==='資產'){
  h+='<th>初始金額(萬)</th><th>每月投入(萬)</th><th>年報酬率%</th>';
 }else{
  h+='<th>金額(萬)</th>';
- if(sec==='負債'){h+='<th>年報酬率%</th>';} if(freq) h+='<th>頻率</th><th>起始</th><th>結束</th>'; h+='<th>操作</th>';
+ if(sec==='負債'){h+='<th>年報酬率%</th>';} if(freq) h+='<th>頻率</th><th>起始</th><th>結束</th><th>年增率%</th>'; h+='<th>操作</th>';
 }
 h+='</tr>';
 (seed[sec]||[]).forEach(r=>h+=row(sec,freq,r));
@@ -59,12 +59,12 @@ if(sec==='資產'){
 }else{
  s+='</select></td><td><input type=number value="'+(r[1]||0)+'"></td>';
  if(sec==='負債'){let rate=r[2]||0; s+='<td><input type=number value="'+rate+'"></td>';} if(freq){
-  let f=r[2]||'月',st=r[3]||39,en=r[4]||100;
+  let f=r[2]||'月',st=r[3]||39,en=r[4]||100,g=r[5]||0;
   s+='<td><select>';
   ['月','季','年'].forEach(x=>s+='<option '+(x==f?'selected':'')+'>'+x+'</option>');
   s+='</select></td>';
   s+='<td><input type=number value="'+st+'"></td>';
-  s+='<td><input type=number value="'+en+'"></td>';
+  s+='<td><input type=number value="'+en+'"></td><td><input type=number value="'+g+'"></td>';
  }
 }
 s+='<td><button onclick="moveUp(this)">↑</button><button onclick="moveDown(this)">↓</button><button onclick="delRow(this)">🗑</button></td>'; return s+'</tr>';
@@ -116,8 +116,8 @@ document.querySelectorAll('#負債 tr').forEach((r,n)=>{
  debts.push({value:v,rate:rt});
  d+=v;
 });
-document.querySelectorAll('#收入 tr').forEach((r,n)=>{if(n){let c=r.querySelectorAll('input,select');let s=+c[3].value,t=+c[4].value;if(age>=s&&age<=t)i+=annual(+c[1].value||0,c[2].value)}});
-document.querySelectorAll('#支出 tr').forEach((r,n)=>{if(n){let c=r.querySelectorAll('input,select');let s=+c[3].value,t=+c[4].value;if(age>=s&&age<=t)e+=annual(+c[1].value||0,c[2].value)}});
+document.querySelectorAll('#收入 tr').forEach((r,n)=>{if(n){let c=r.querySelectorAll('input,select');let s=+c[3].value,t=+c[4].value,g=(+c[5].value||0)/100;if(age>=s&&age<=t){let yrs=age-s;i+=annual((+c[1].value||0)*Math.pow(1+g,yrs),c[2].value)}}});
+document.querySelectorAll('#支出 tr').forEach((r,n)=>{if(n){let c=r.querySelectorAll('input,select');let s=+c[3].value,t=+c[4].value,g=(+c[5].value||0)/100;if(age>=s&&age<=t){let yrs=age-s;e+=annual((+c[1].value||0)*Math.pow(1+g,yrs),c[2].value)}}});
 let net=a-d,flow=i-e,need=e*25,fire=net>=need;
 let investNow=assets.reduce((s,x)=>s+x.value,0);
 let investIncome=assets.reduce((s,x)=>s+x.value*x.rate,0);
@@ -138,13 +138,13 @@ for(let y=age;y<=100;y++){
    if(!n)return;
    let c=r.querySelectorAll('input,select');
    let st=+c[3].value,en=+c[4].value;
-   if(y>=st && y<=en) yearIncome+=annual(+c[1].value||0,c[2].value);
+   if(y>=st&&y<=en){let g=(+c[5].value||0)/100;yearIncome+=annual((+c[1].value||0)*Math.pow(1+g,y-st),c[2].value);}
  });
  document.querySelectorAll('#支出 tr').forEach((r,n)=>{
    if(!n)return;
    let c=r.querySelectorAll('input,select');
    let st=+c[3].value,en=+c[4].value;
-   if(y>=st && y<=en) yearExpense+=annual(+c[1].value||0,c[2].value);
+   if(y>=st&&y<=en){let g=(+c[5].value||0)/100;yearExpense+=annual((+c[1].value||0)*Math.pow(1+g,y-st),c[2].value);}
  });
  let yearFlow=yearIncome-yearExpense;
  let invest=0;
